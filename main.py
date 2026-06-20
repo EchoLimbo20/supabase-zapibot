@@ -6,10 +6,10 @@ O que o código faz:
 - Se o envio der certo, marca o contato como 'mensagem_enviada' = True
 - Retorna resumo no terminal
 """
-
-import requests
-from supabase import create_client
 import os
+import requests
+
+from supabase import create_client
 from dotenv import load_dotenv
 from colorama import init, Fore, Style
 
@@ -25,11 +25,6 @@ instance = os.getenv("ZAPI_INSTANCE_ID")
 #Filtra só quem não recebeu a mensagem e limita 3
 contatos = sb.table("contatos").select("*").eq("mensagem_enviada", False).limit(3).execute().data
 
-print(f"\n{Fore.CYAN}{Style.BRIGHT}-----------------------------------------------------")
-print(f"ENVIADOR DE MENSAGENS - Z-API+SUPABASE")
-print(f"{Fore.CYAN}{Style.BRIGHT}-----------------------------------------------------{Style.RESET_ALL}")
-print(f"{Fore.YELLOW}→ {len(contatos)} contato(s) pendente(s)\n{Style.RESET_ALL}")
-
 #Contadores para resumo final de mensagens enviadas e falhas
 enviados = 0
 falhas = 0
@@ -37,8 +32,7 @@ falhas = 0
 #Enviar
 for i, c in enumerate(contatos, start=1):
     msg = f"Olá, {c['nome']} tudo bem com você?"
-
-    print(f"{Fore.BLUE}[{i}/{len(contatos)}]{Style.RESET_ALL} Enviando para {Fore.WHITE}{Style.BRIGHT}{c['nome']}{Style.RESET_ALL}...", end=" ")
+    print(f"{Fore.BLUE}[{i}/{len(contatos)}] Enviando para {Fore.WHITE}{Style.BRIGHT}{c['nome']}...", end=" ")
 
     #Faz a chamada pra API da Z-API pra enviar a mensagem de texto e tratamento de erros
     try:
@@ -62,7 +56,7 @@ for i, c in enumerate(contatos, start=1):
     if resposta.get("messageId") or resposta.get("zaapId"):
         try:
             sb.table("contatos").update({"mensagem_enviada": True}).eq("id", c["id"]).execute()
-            print(f"{Fore.GREEN}Enviado{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}Enviado")
             enviados += 1
             
         except Exception as erro:
@@ -72,9 +66,13 @@ for i, c in enumerate(contatos, start=1):
     else:
         print(f"Falhou")
         falhas += 1
-
+        
+print(f"\n{Fore.CYAN}{Style.BRIGHT}-----------------------------------------------------")
+print(f"ENVIADOR DE MENSAGENS - Z-API+SUPABASE")
+print(f"{Fore.CYAN}{Style.BRIGHT}-----------------------------------------------------")
+print(f"{Fore.YELLOW}→ {len(contatos)} contato(s) pendente(s)\n")
 print(f" RESUMO")
-print(f"___________________________{Style.RESET_ALL}")
-print(f"{Fore.GREEN}Enviados: {enviados}{Style.RESET_ALL}")
-print(f"{Fore.RED}Falhas:   {falhas}{Style.RESET_ALL}")
-print(f"___________________________{Style.RESET_ALL}\n")
+print(f"---------------------")
+print(f"{Fore.GREEN}Enviados: {enviados}")
+print(f"{Fore.RED}Falhas:   {falhas}")
+print(f"---------------------\n")
