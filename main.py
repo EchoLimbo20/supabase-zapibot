@@ -12,6 +12,18 @@ import requests
 from supabase import create_client
 from dotenv import load_dotenv
 from colorama import init, Fore, Style
+import logging
+
+#Configurar logs
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('whatsapp_sender.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 init(autoreset=True)
 load_dotenv()
@@ -32,8 +44,7 @@ falhas = 0
 #Enviar
 for i, c in enumerate(contatos, start=1):
     msg = f"Olá, {c['nome']} tudo bem com você?"
-    print(f"{Fore.BLUE}[{i}/{len(contatos)}] Enviando para {Fore.WHITE}{Style.BRIGHT}{c['nome']}...", end=" ")
-
+    logger.info(f"[{i}/{len(contatos)}] Enviando para {c['nome']}...")
     #Faz a chamada pra API da Z-API pra enviar a mensagem de texto e tratamento de erros
     try:
         r = requests.post(
@@ -44,27 +55,27 @@ for i, c in enumerate(contatos, start=1):
         resposta = r.json()
         
     except requests.exceptions.RequestException as erro:
-        print(f"ERRO (erro de conexão: {erro})")
+        logger.error(f"Erro de conexão para {c['nome']}: {erro}")
         falhas += 1
         continue
     
     except ValueError:
-        print(f"ERRO (resposta inválida da Z-API)")
+        logger.error(f"Resposta inválida da Z-API para {c['nome']}")
         falhas += 1
         continue
     
     if resposta.get("messageId") or resposta.get("zaapId"):
         try:
             sb.table("contatos").update({"mensagem_enviada": True}).eq("id", c["id"]).execute()
-            print(f"{Fore.GREEN}Enviado")
+            logger.info(f"✓ {c['nome']} marcado como enviado (ID: {resposta.get('messageId')})")
             enviados += 1
             
         except Exception as erro:
-            print(f"Enviado, mas FALHA ao atualizar Supabase ({erro})")
+            logger.error(f"✗ Falha ao enviar para {c['nome']}")
             enviados += 1
             
     else:
-        print(f"Falhou")
+        logger.error(f"✗ Falha ao enviar para {c['nome']}")
         falhas += 1
         
 print(f"\n{Fore.CYAN}{Style.BRIGHT}-----------------------------------------------------")

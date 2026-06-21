@@ -1,0 +1,1 @@
+2026-06-21 18:08:26,199 - INFO - HTTP Request: GET https://ezfzmmcupfywqfkuisnt.supabase.co/rest/v1/contatos?select=%2A&mensagem_enviada=eq.False&limit=3 "HTTP/1.1 200 OK"
